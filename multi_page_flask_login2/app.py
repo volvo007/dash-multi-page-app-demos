@@ -22,6 +22,7 @@ from dash import dcc, html, Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 from utils.login_handler import restricted_page
 
+from config import Config
 
 
 # Exposing the Flask Server to enable configuring it for logging in
@@ -37,12 +38,13 @@ def login_button_click():
             return """invalid username and/or password <a href='/login'>login here</a>"""
         if VALID_USERNAME_PASSWORD.get(username) == password:
             login_user(User(username))
+            print(session)
             if 'url' in session:
                 if session['url']:
                     url = session['url']
                     session['url'] = None
-                    return redirect(url) ## redirect to target url
-            return redirect('/') ## redirect to home
+                    return redirect(url)  # redirect to target url
+            return redirect('/')  # redirect to home
         return """invalid username and/or password <a href='/login'>login here</a>"""
 
 
@@ -56,7 +58,8 @@ VALID_USERNAME_PASSWORD = {"test": "test", "hello": "world"}
 
 
 # Updating the Flask Server configuration with Secret Key to encrypt the user session cookie
-server.config.update(SECRET_KEY=os.getenv("SECRET_KEY"))
+# server.config.update(SECRET_KEY=os.environ.get("SECRET_KEY"))
+server.config.from_object(Config)
 
 # Login manager object will be used to login / logout users
 login_manager = LoginManager()
@@ -91,37 +94,36 @@ app.layout = html.Div(
 
 @app.callback(
     Output("user-status-header", "children"),
-    Output('url','pathname'),
+    Output('url', 'pathname'),
     Input("url", "pathname"),
-    Input({'index': ALL, 'type':'redirect'}, 'n_intervals')
+    Input({'index': ALL, 'type': 'redirect'}, 'n_intervals')
 )
 def update_authentication_status(path, n):
-    ### logout redirect
+    # logout redirect
     if n:
         if not n[0]:
             return '', dash.no_update
         else:
             return '', '/login'
 
-    ### test if user is logged in
+    # test if user is logged in
     if current_user.is_authenticated:
         if path == '/login':
             return dcc.Link("logout", href="/logout"), '/'
-        return dcc.Link("logout", href="/logout"), dash.no_update
+        return dcc.Link("LOGOUT", href="/logout"), dash.no_update
     else:
-        ### if page is restricted, redirect to login and save path
+        # if page is restricted, redirect to login and save path
         if path in restricted_page:
             session['url'] = path
             return dcc.Link("login", href="/login"), '/login'
 
-    ### if path not login and logout display login link
+    # if path not login and logout display login link
     if current_user and path not in ['/login', '/logout']:
         return dcc.Link("login", href="/login"), dash.no_update
 
-    ### if path login and logout hide links
+    # if path login and logout hide links
     if path in ['/login', '/logout']:
         return '', dash.no_update
-
 
 
 if __name__ == "__main__":

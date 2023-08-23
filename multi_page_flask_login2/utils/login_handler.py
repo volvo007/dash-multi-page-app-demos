@@ -1,6 +1,7 @@
 import dash
 restricted_page = {}
 
+
 def require_login(page):
     for pg in dash.page_registry:
         if page == pg:

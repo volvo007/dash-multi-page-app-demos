@@ -19,7 +19,8 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    dcc.Link(f"{page['name']} - {page['path']}", href=page["path"])
+                    dcc.Link(f"{page['name']} - {page['path']}",
+                             href=page["path"])
                 )
                 for page in dash.page_registry.values()
                 if page["module"] != "pages.not_found_404"
